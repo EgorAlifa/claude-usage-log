@@ -14,13 +14,32 @@ SQL-запросы) выполняются локальными моделями
 сравнения в записях. Объём кода оценивается как сумма
 затронутых файлов без тестов и локалей, токены ≈ байты / 3.
 
-| Модель | Окно контекста | Длина ответа (tokenLimit) | Рассуждения |
-|---|---|---|---|
-| Claude Opus 5.5 / Sonnet 5.5 | 1 млн | 128 тыс. | да |
-| local: Qwen3.8-27B (крупнейшее окно среди local) | 250 тыс. | 32 тыс. | да |
-| local: Gemma 4 31B / Qwen3.5-35B / Qwen3-32B / Qwen3-Coder-30B / Qwen2.5-72B | 150 / 120 / 41 / 33 / 16 тыс. | 10 тыс. | частично |
-| lanit: DeepSeek-V4-Flash, DKS-Lynx / DKS-Ultra, Qwen3.5-397B | 205 / 262 тыс. | 10–40 тыс. | да |
-| lanit: GLM-5.3-Flash, DKS-Leo | 524 тыс. | 10 тыс. | да |
-| lanit: DeepSeek-V4.1-Flash | 1 млн | 40 тыс. | нет |
-| openrouter: DeepSeek V4 Pro, MiniMax M3 (внешние платные API) | 1 млн | 10 / 131 тыс. | да |
-| Qwen3-Embedding-8B, BGE Reranker, Whisper | — | — | не генерируют код |
+| # | Код | Модель | Размещение | Окно (contextSize) | tokenLimitation | Рассуждения | Примечание |
+|---|---|---|---|---|---|---|---|
+| 1 | QWEN25_72B_VLLM | Qwen2.5-72B-Instruct-GPTQ-Int8 | local | 16 384 | 10 000 | нет | |
+| 2 | QWEN3_CODER_30B | Qwen3-Coder-30B-A3B-Instruct-FP8 | local | 32 768 | 10 000 | нет | |
+| 3 | QWEN3_32B | Qwen3-32B | local | 40 960 | 10 000 | нет | maxNewTokens 16 000 |
+| 4 | WHISPER_LOCAL | whisper-2 | local | — | — | — | распознавание речи, код не генерирует |
+| 5 | QWEN3_VL_8B | Qwen3-VL-8B-Instruct | local | 80 000 | 16 384 | да | визуально-языковая |
+| 6 | BAAI_BGE_RERANKER_V2_M3 | bge-reranker-v2-m3 | local | 8 194 | 0 | — | реранкер, код не генерирует |
+| 7 | QWEN3_5_35B_A3B | Qwen3.5-35B-A3B | local | 120 000 | 10 000 | да | |
+| 8 | QWEN3_5_397B_A17B | Qwen3.5-397B-A17B (lanit/dd) | lanit | 262 144 | 40 000 | да | |
+| 9 | DKS_ULTRA | DKS-Ultra | lanit | 262 144 | 40 000 | да | |
+| 10 | GEMMA_4_31B | gemma-4-31B-it | local | 150 000 | 10 000 | нет | |
+| 11 | QWEN3_EMBEDDING_8B | Qwen3-Embedding-8B | local | 32 000 | 10 000 | — | эмбеддинги, код не генерирует |
+| 12 | DEEPSEEK_V4_PRO | deepseek-v4-pro-0813 | openrouter | 1 000 000 | 10 000 | да | внешний платный API |
+| 13 | MINIMAX_M3 | minimax-m3 | openrouter | 1 000 000 | 131 000 | да | внешний платный API |
+| 14 | DEEPSEEK_V4_FLASH_0731 | DeepSeek-V4-Flash-0731 | lanit | 204 800 | 40 000 | да | |
+| 15 | GLM_5_3_FLASH | GLM-5.3-Flash | lanit | 524 288 | 10 000 | да | |
+| 16 | DKS_LEO | DKS-Leo | lanit | 524 288 | 10 000 | да | |
+| 17 | DKS_LYNX | DKS-Lynx | lanit | 204 800 | 10 000 | да | |
+| 18 | DKS_VISION | DKS-Vision | lanit | 204 800 | 32 000 | нет | визуально-языковая |
+| 19 | QWEN3_8_27B_FP8 | Qwen3.8-27B-FP8 | local | 250 000 | 32 000 | да | |
+| 20 | DEEPSEEK_V4_1_FLASH | DeepSeek-V4.1-Flash | lanit | 1 048 576 | 40 000 | нет | |
+| 21 | GLM_5_3 | glm-5.3 | openrouter | 524 288 | 16 000 | нет | внешний платный API |
+| 22 | MODEL_ERROR | local/error | local | 1 | 10 000 | нет | тестовая заглушка, не модель |
+| — | — | **Claude Opus 5.5 / Sonnet 5.5** | Anthropic | **1 000 000** | — | **да** | ответ до 128 тыс. токенов |
+
+Параметр `chatMessageWindowSize` (20 у всех) по договорённости не учитывается. `tokenLimitation` в
+доводах не используется: его смысл не подтверждён (у Qwen3-32B длина ответа задана отдельно —
+`maxNewTokens`). Рассуждения — значение `enable_thinking`.
